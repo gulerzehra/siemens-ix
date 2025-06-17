@@ -102,4 +102,25 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const dateDropdown = shadow.querySelector(`[data-testid="date-dropdown"]`);
   console.log("dateDropdown:", dateDropdown);
+
+  const hydrated = dateDropdown.querySelectorAll(".hydrated");
+  console.log("hydrated elements:", hydrated);
+  console.log(hydrated[3]);
+
+  const card = hydrated[3].shadowRoot;
+  console.log("Card shadowRoot:", card);
+
+  const day = card.querySelectorAll(".calendar-item");
+  console.log("Grid element:", day);
+
+  console.log(hydrated);
+  hydrated[3].addEventListener("click", () => {
+    console.log("✅ Hydrated element clicked!");
+  });
+
+  day.forEach((item) => {
+    item.addEventListener("click", () => {
+      console.log("✅ Calendar item clicked:", item);
+    });
+  });
 });
