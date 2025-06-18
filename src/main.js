@@ -9,6 +9,8 @@ defineIxIconCustomElements();
 defineCustomElements();
 
 window.addEventListener("DOMContentLoaded", async () => {
+  moment.locale("tr"); // Türkçe dil desteği
+
   const dropdown = document.querySelector("#date-picker");
   if (!dropdown) return console.error("❌ #date-picker bulunamadı");
 
@@ -26,6 +28,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   trigger.addEventListener("click", () => {
     console.log("✅ Dropdown trigger clicked!");
   });
+  trigger.click();
+  await new Promise((r) => setTimeout(r, 50));
 
   const dateDropdown = shadow.querySelector(`[data-testid="date-dropdown"]`);
   console.log("dateDropdown:", dateDropdown);
@@ -41,11 +45,27 @@ window.addEventListener("DOMContentLoaded", async () => {
   const grid = card.querySelectorAll(".calendar-item");
   console.log("Grid element:", grid);
 
-  const dayCells = card.querySelectorAll('[id^="day-cell"]');
-  dayCells.forEach((cell) => {
+  // const dayCells = card.querySelectorAll('[id^="day-cell"]');
+
+  function getDayCells() {
+    return card.querySelectorAll('[id^="day-cell"]');
+  }
+
+  getDayCells().forEach((cell) => {
     console.log(cell.id, cell.textContent);
   }); //burada bütün günleri çektim
-  console.log("❓ dayCells sayısı:", dayCells.length, dayCells);
+  console.log("❓ dayCells sayısı:", getDayCells().length, getDayCells());
+
+  function getMonths() {
+    const monthName = selector.querySelector(
+      `[data-testid="year-month-button"]`
+    );
+    const monthNameText = monthName.querySelector(".capitalize");
+    return monthNameText;
+  }
+
+  const selector = card.querySelector(".selector");
+  console.log("selector:", selector);
 
   let isFirstClick = true;
   let fromDateStr = ""; // "DD.MM.YYYY" formatında saklayacağız
@@ -56,24 +76,32 @@ window.addEventListener("DOMContentLoaded", async () => {
     const minDate = sel.clone().subtract(7, "days");
     const maxDate = sel.clone().add(7, "days");
 
-    dayCells.forEach((cell) => {
-      const dayNum = parseInt(cell.textContent.trim(), 10);
-      // same month/year içinde tarih oluşturuyoruz
-      const cellDate = sel.clone().date(dayNum);
-      const inRange = cellDate.isBetween(minDate, maxDate, "day", "[]");
+    if (minDate.format("MM") === maxDate.format("MM")) {
+      const dayCells = getDayCells();
+      dayCells.forEach((cell) => {
+        const cellDate = moment(cell.textContent, "DD.MM.YYYY");
+        if (cellDate.isBetween(minDate, maxDate, null, "[]")) {
+          cell.classList.remove("disabled");
+          cell.removeAttribute("aria-disabled");
+          cell.style.opacity = "";
+          cell.style.backgroundColor = "";
+        } else {
+          cell.classList.add("disabled");
+          cell.setAttribute("aria-disabled", "true");
+          cell.style.opacity = "0.4";
+          cell.style.backgroundColor = "gray";
+        }
+      });
 
-      if (!inRange) {
-        cell.classList.add("disabled");
-        cell.setAttribute("aria-disabled", "true");
-      } else {
-        cell.classList.remove("disabled");
-        cell.removeAttribute("aria-disabled");
-      }
-    });
+      console.log("Aynı ay içinde 7 gün kuralı uygulanıyor.");
+      console.log(minDate.format("DD.MM.YYYY"), maxDate.format("DD.MM.YYYY"));
+    } else {
+      console.log("Farklı aylar arasında 7 gün kuralı uygulanıyor.");
+      console.log(minDate.format("MM"), maxDate.format("MM"));
+    }
   }
 
-  // ————— Tıklama Mantığı —————
-  dayCells.forEach((cell) => {
+  getDayCells().forEach((cell) => {
     cell.addEventListener("click", async () => {
       // ★ Bileşenin tıklamayı işleyip `from`/`to` state’ini güncellemesine izin ver:
       await new Promise((r) => setTimeout(r, 0));
@@ -91,7 +119,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         // ► İkinci tıklama → to atandı → gerekiyorsa reset et
         isFirstClick = true;
         // eğer yeni seçim için eski disable’ları temizlemek istersen:
-        dayCells.forEach((c) => {
+        getDayCells().forEach((c) => {
           c.classList.remove("disabled");
           c.removeAttribute("aria-disabled");
         });
