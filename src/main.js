@@ -60,17 +60,91 @@ window.addEventListener("DOMContentLoaded", async () => {
   // const monthNameText = monthName.querySelector(".capitalize");
   //yazan ayın adı
 
-  const callback = (mutationsList) => {
+  const callback = async (mutationsList) => {
     for (const mutation of mutationsList) {
-      // Metin düğümü değiştiğinde...
-      if (mutation.type === "characterData") {
-        console.log("Text değişti:", mutation.target.data);
-      }
-      if (mutation.type === "childList") {
-        console.log("Child list değişti. Yeni ay adı:", monthName.textContent);
-      }
+      if (mutation.type !== "characterData") continue;
+
+      const { from } = await dropdown.getDateRange();
+      if (!from) return;
+
+      const sel = moment(from, "DD.MM.YYYY");
+      const minDate = sel.clone().subtract(7, "days");
+      const maxDate = sel.clone().add(7, "days");
+
+      const monthMin = minDate.month();
+      const monthMax = maxDate.month();
+
+      const monthText = monthName.textContent.trim(); // Örn: "Ağustos 2025"
+      const displayedMonth = moment(monthText, "MMMM YYYY", "tr").month();
+
+      console.log(
+        `from=${from}`,
+        `min=${minDate.format("MM")}`,
+        `max=${maxDate.format("MM")}`,
+        `view=${displayedMonth}`,
+        `min===max? ${monthMin === monthMax}`
+      );
+
+      const cells = getDayCells();
+
+      cells.forEach((cell) => {
+        const dayNum = parseInt(cell.textContent.trim(), 10);
+        const cellDate = moment()
+          .year(sel.year()) // aynı yıl
+          .month(displayedMonth) // o anda görüntülenen ay
+          .date(dayNum);
+
+        // —————— Tek aya sığan aralık: ——————
+        if (monthMin === monthMax) {
+          if (displayedMonth !== monthMin) {
+            // başka aya tıkladıysa: tümünü kapat
+            cell.classList.add("disabled");
+            cell.setAttribute("aria-disabled", "true");
+            cell.style.opacity = "0.4";
+            cell.style.backgroundColor = "gray";
+          } else {
+            // aynı aydayız: 7-gün aralığındaki günleri aç, diğerlerini kapat
+            const inRange = cellDate.isBetween(minDate, maxDate, "day", "[]");
+            if (inRange) {
+              cell.classList.remove("disabled");
+              cell.removeAttribute("aria-disabled");
+              cell.style.opacity = "";
+              cell.style.backgroundColor = "";
+            } else {
+              cell.classList.add("disabled");
+              cell.setAttribute("aria-disabled", "true");
+              cell.style.opacity = "0.4";
+              cell.style.backgroundColor = "gray";
+            }
+          }
+
+          // —————— Aralık iki aya yayılıyorsa: ——————
+        } else {
+          // sadece minDate’in ayındaysak, gün >= minDate
+          // veya maxDate’in ayındaysak, gün <= maxDate
+          let inRange = false;
+          if (displayedMonth === monthMin) {
+            inRange = cellDate.isSameOrAfter(minDate, "day");
+          } else if (displayedMonth === monthMax) {
+            inRange = cellDate.isSameOrBefore(maxDate, "day");
+          }
+          if (inRange) {
+            cell.classList.remove("disabled");
+            cell.removeAttribute("aria-disabled");
+            cell.style.opacity = "";
+            cell.style.backgroundColor = "";
+          } else {
+            cell.classList.add("disabled");
+            cell.setAttribute("aria-disabled", "true");
+            cell.style.opacity = "0.4";
+            cell.style.backgroundColor = "gray";
+          }
+        }
+      });
     }
   };
+
+  let datefrom = "";
 
   const observer = new MutationObserver(callback);
   observer.observe(monthName, {
@@ -92,7 +166,8 @@ window.addEventListener("DOMContentLoaded", async () => {
   let fromDateStr = ""; // "DD.MM.YYYY" formatında saklayacağız
 
   // ————— 7 Gün Kuralı —————
-  function applySevenDayRule(fromStr) {
+  async function applySevenDayRule(fromStr) {
+    const { from, to } = await dropdown.getDateRange();
     const sel = moment(fromStr, "DD.MM.YYYY");
     const minDate = sel.clone().subtract(7, "days");
     const maxDate = sel.clone().add(7, "days");
@@ -136,6 +211,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         //bu kodu burada çağırdığım zaman ilk tıklamayı hangi ayda yaparsam onun gün sayısını veriyor
         // ► İlk tıklama → from atandı
         fromDateStr = from;
+        datefrom = from;
         isFirstClick = false;
         applySevenDayRule(fromDateStr);
       } else if (!isFirstClick && to) {
