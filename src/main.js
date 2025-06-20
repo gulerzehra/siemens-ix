@@ -37,7 +37,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   // console.log("hydrated elements:", hydrated);
   // console.log(hydrated[3]);
   //?sadece takvim kısmı
-  // console.log(hydrated[4]); ->burası done buton
+  console.log(hydrated[4]);
+  //->burası done buton
+
+  const doneButton = hydrated[4];
+  doneButton.addEventListener("click", () => {
+    console.log("✅ Done button clicked!");
+  });
 
   const card = hydrated[3].shadowRoot;
   // console.log("Card shadowRoot:", card);
@@ -123,6 +129,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     console.log("→ maxDate ve manuel disable uygulandı:", todayIso);
   });
+
+  function handlerDateSelection(dateFrom, dateTo) {
+    console.log(dateFrom, dateTo);
+    // Burada seçilen tarih aralığını işleyebilirsin
+    // Örneğin, dropdown.setDateRange({ from: dateFrom, to: dateTo });
+  }
 
   function getDayCells() {
     return card.querySelectorAll('[id^="day-cell"]');
@@ -372,10 +384,24 @@ window.addEventListener("DOMContentLoaded", async () => {
     item.addEventListener("click", () => {
       setTimeout(async () => {
         dropdown.getDateRange().then(({ from, to }) => {
+          if (from && to) {
+            handlerDateSelection(from, to);
+          }
           console.log("▶ from, to =", from, to);
         });
       }, 0);
     });
+  });
+
+  doneButton.addEventListener("click", async () => {
+    const range = await dropdown.getDateRange();
+    const from = range.from;
+    let to = range.to;
+
+    if (from && !to) {
+      to = from;
+      handlerDateSelection(from, to);
+    }
   });
 
   // dropdown.addEventListener("dateRangeChange", (evt) => {
