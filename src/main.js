@@ -8,6 +8,8 @@ import "moment/locale/tr";
 defineIxIconCustomElements();
 defineCustomElements();
 
+moment.locale("tr");
+
 window.addEventListener("DOMContentLoaded", async () => {
   const dropdown = document.querySelector("#date-picker");
   //dropdown tamamı
@@ -57,8 +59,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   // console.log("❓ dayCells sayısı:", dayCells.length);
 
   const monthName = selector.querySelector(`[data-testid="year-month-button"]`);
-  // const monthNameText = monthName.querySelector(".capitalize");
-  //yazan ayın adı
+  const monthNameText = monthName.querySelector(".capitalize");
+  // console.log(monthNameText);
+  // yazan ayın adı
 
   const callback = async (mutationsList) => {
     for (const mutation of mutationsList) {
@@ -67,6 +70,15 @@ window.addEventListener("DOMContentLoaded", async () => {
       const { from } = await dropdown.getDateRange();
       if (!from) return;
 
+      // if (!fromDateStr) {
+      //   const range = await dropdown.getDateRange();
+      //   if (range.from) {
+      //     fromDateStr = range.from;
+      //   } else {
+      //     return; // Eğer hala bir seçim yoksa, devam etme
+      //   }
+      // }
+
       const sel = moment(from, "DD.MM.YYYY");
       const minDate = sel.clone().subtract(7, "days");
       const maxDate = sel.clone().add(7, "days");
@@ -74,25 +86,80 @@ window.addEventListener("DOMContentLoaded", async () => {
       const monthMin = minDate.month();
       const monthMax = maxDate.month();
 
-      const monthText = monthName.textContent.trim(); // Örn: "Ağustos 2025"
-      const displayedMonth = moment(monthText, "MMMM YYYY", "tr").month();
+      // monthNameText: en başta seçtiğin element
 
-      console.log(
-        `from=${from}`,
-        `min=${minDate.format("MM")}`,
-        `max=${maxDate.format("MM")}`,
-        `view=${displayedMonth}`,
-        `min===max? ${monthMin === monthMax}`
-      );
+      // fazla boşlukları tekle, trim et
+
+      // 1) Sabit bir Türkçe ay isimleri listesi:
+      const monthNamesTr = [
+        "Ocak",
+        "Şubat",
+        "Mart",
+        "Nisan",
+        "Mayıs",
+        "Haziran",
+        "Temmuz",
+        "Ağustos",
+        "Eylül",
+        "Ekim",
+        "Kasım",
+        "Aralık",
+      ];
+
+      const monthSpanRaw = monthNameText.textContent; // Ex: "Temmuz 2025"
+      const monthSpan = monthSpanRaw.replace(/\s+/g, " ").trim();
+      console.log(monthSpan);
+      console.log("Parsing monthSpan:", JSON.stringify(monthSpan));
+
+      // 2) monthSpan zaten "Temmuz 2025" gibi geliyor:
+      const [mn, yy] = monthSpan.split(" ");
+      const displayedMonth = monthNamesTr.indexOf(mn);
+      const displayedYear = parseInt(yy, 10);
+
+      console.log({ monthName, displayedMonth, displayedYear });
+      // Örnek çıktı:
+      // { monthName: "Temmuz", displayedMonth: 6, displayedYear: 2025 }
 
       const cells = getDayCells();
+      cells.forEach((cell) => {
+        cell.classList.remove("disabled");
+        cell.removeAttribute("aria-disabled");
+        cell.style.opacity = "";
+        cell.style.backgroundColor = "";
+      });
 
       cells.forEach((cell) => {
         const dayNum = parseInt(cell.textContent.trim(), 10);
-        const cellDate = moment()
-          .year(sel.year()) // aynı yıl
-          .month(displayedMonth) // o anda görüntülenen ay
-          .date(dayNum);
+        const cellDate = moment({
+          year: sel.year(),
+          month: displayedMonth,
+          day: dayNum,
+        });
+
+        if (!cellDate.isBetween(minDate, maxDate, "day", "[]")) {
+          cell.classList.add("disabled");
+          cell.setAttribute("aria-disabled", "true");
+          cell.style.opacity = "0.4";
+          cell.style.backgroundColor = "gray";
+        }
+
+        console.log(
+          `from=${from}`,
+          `min=${minDate.format("MM")}`,
+          `max=${maxDate.format("MM")}`,
+          `view=${displayedMonth}`,
+          `min===max? ${monthMin === monthMax}`
+        );
+
+        // const cells = getDayCells();
+
+        // cells.forEach((cell) => {
+        //   const dayNum = parseInt(cell.textContent.trim(), 10);
+        //   const cellDate = moment()
+        //     .year(sel.year()) // aynı yıl
+        //     .month(displayedMonth) // o anda görüntülenen ay
+        //     .date(dayNum);
+        // console.log(cellDate);
 
         // —————— Tek aya sığan aralık: ——————
         if (monthMin === monthMax) {
@@ -147,6 +214,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   let datefrom = "";
 
   const observer = new MutationObserver(callback);
+
   observer.observe(monthName, {
     characterData: true, // textContent içi
     childList: true, // içeriğe yeni node eklendi/çıkarıldı
@@ -155,6 +223,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   const textNode = monthName.firstChild;
   observer.observe(textNode, { characterData: true });
+  observer.observe(monthName.firstChild, { characterData: true });
 
   function getDayCells() {
     return card.querySelectorAll('[id^="day-cell"]');
