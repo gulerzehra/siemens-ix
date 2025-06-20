@@ -130,6 +130,52 @@ window.addEventListener("DOMContentLoaded", async () => {
   //?bu şekilde çağırmak mantıklı yeni gelen değeri alıyorum belli bir değişkende sabit kalmıyor günler
   // console.log("getDayCells() sayısı:", getDayCells().length);
 
+  function disable(cell) {
+    cell.classList.add("disabled");
+    cell.setAttribute("aria-disabled", "true");
+    cell.style.opacity = "0.4";
+    cell.style.backgroundColor = "gray";
+  }
+  function enable(cell) {
+    cell.classList.remove("disabled");
+    cell.removeAttribute("aria-disabled");
+    cell.style.opacity = "";
+    cell.style.backgroundColor = "";
+  }
+
+  function updateFutureDisable() {
+    const today = moment().startOf("day");
+
+    // Parse edilen ay ve yılı al
+    const [mn, yy] = monthNameText.textContent.trim().split(" ");
+    const dispMonth = monthNamesTr.indexOf(mn);
+    const dispYear = parseInt(yy, 10);
+
+    getDayCells().forEach((cell) => {
+      const dayNum = parseInt(cell.textContent.trim(), 10);
+      const cellDate = moment({
+        year: dispYear,
+        month: dispMonth,
+        date: dayNum,
+      });
+
+      if (cellDate.isAfter(today, "day")) disable(cell);
+      else enable(cell);
+    });
+  }
+
+  trigger.addEventListener("click", async () => {
+    await new Promise((r) => setTimeout(r, 0));
+    updateFutureDisable();
+  });
+
+  const obser = new MutationObserver(updateFutureDisable);
+  obser.observe(monthNameText, { childList: true, subtree: true });
+  obser.observe(monthNameText.firstChild, { characterData: true });
+
+  // 3) Sayfa açıldıktan sonra bir kez uygulayalım:
+  updateFutureDisable();
+
   const callback = async (mutationsList) => {
     for (const mutation of mutationsList) {
       if (mutation.type !== "characterData") continue;
