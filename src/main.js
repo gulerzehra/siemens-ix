@@ -27,7 +27,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   // trigger.addEventListener("click", () => {
   //   console.log("✅ Dropdown trigger clicked!");
   // });
-  //butona tıklandığında anlamak için yazdım
+  // butona tıklandığında anlamak için yazdım
 
   const dateDropdown = shadow.querySelector(`[data-testid="date-dropdown"]`);
   // console.log("dateDropdown:", dateDropdown);
@@ -63,6 +63,73 @@ window.addEventListener("DOMContentLoaded", async () => {
   // console.log(monthNameText);
   // yazan ayın adı
 
+  // 1) Sabit bir Türkçe ay isimleri listesi:
+  const monthNamesTr = [
+    "Ocak",
+    "Şubat",
+    "Mart",
+    "Nisan",
+    "Mayıs",
+    "Haziran",
+    "Temmuz",
+    "Ağustos",
+    "Eylül",
+    "Ekim",
+    "Kasım",
+    "Aralık",
+  ];
+
+  trigger.addEventListener("click", async () => {
+    console.log("🔔 No Range Set clicked");
+
+    // Kısa bir bekleme, panel tam oluşsun
+    await new Promise((r) => setTimeout(r, 0));
+
+    // Bugünün tarihini ISO formatta al
+    const todayIso = moment().format("YYYY-MM-DD");
+
+    // Geçmiş tamamen açık, geleceği bugüne kırp
+    dropdown.minDate = undefined;
+    dropdown.maxDate = todayIso;
+    // HTML attribute da set et (isteğe bağlı ama garantiler):
+    dropdown.setAttribute("min-date", "");
+    dropdown.setAttribute("max-date", todayIso);
+
+    console.log("→ dropdown.maxDate =", dropdown.maxDate);
+
+    const monthSpanRaw = monthNameText.textContent.trim(); // "Temmuz 2025"
+    const [mn, yy] = monthSpanRaw.split(" ");
+    const displayedMonth = monthNamesTr.indexOf(mn);
+    const displayedYear = parseInt(yy, 10);
+
+    // 5) Tüm gün hücrelerini disable etmesi gerekiyor
+    getDayCells().forEach((cell) => {
+      const dayNum = parseInt(cell.textContent.trim(), 10);
+      // Hücre tarihi:
+      const cellDate = moment({
+        year: displayedYear,
+        month: displayedMonth,
+        date: dayNum,
+      });
+
+      // Eğer bugünden sonrasıysa disable et
+      if (cellDate.isAfter(todayIso, "day")) {
+        cell.classList.add("disabled");
+        cell.setAttribute("aria-disabled", "true");
+        cell.style.opacity = "0.4";
+        cell.style.backgroundColor = "gray";
+      }
+    });
+
+    console.log("→ maxDate ve manuel disable uygulandı:", todayIso);
+  });
+
+  function getDayCells() {
+    return card.querySelectorAll('[id^="day-cell"]');
+  }
+  //?bu şekilde çağırmak mantıklı yeni gelen değeri alıyorum belli bir değişkende sabit kalmıyor günler
+  // console.log("getDayCells() sayısı:", getDayCells().length);
+
   const callback = async (mutationsList) => {
     for (const mutation of mutationsList) {
       if (mutation.type !== "characterData") continue;
@@ -70,41 +137,12 @@ window.addEventListener("DOMContentLoaded", async () => {
       const { from } = await dropdown.getDateRange();
       if (!from) return;
 
-      // if (!fromDateStr) {
-      //   const range = await dropdown.getDateRange();
-      //   if (range.from) {
-      //     fromDateStr = range.from;
-      //   } else {
-      //     return; // Eğer hala bir seçim yoksa, devam etme
-      //   }
-      // }
-
       const sel = moment(from, "DD.MM.YYYY");
       const minDate = sel.clone().subtract(7, "days");
       const maxDate = sel.clone().add(7, "days");
 
       const monthMin = minDate.month();
       const monthMax = maxDate.month();
-
-      // monthNameText: en başta seçtiğin element
-
-      // fazla boşlukları tekle, trim et
-
-      // 1) Sabit bir Türkçe ay isimleri listesi:
-      const monthNamesTr = [
-        "Ocak",
-        "Şubat",
-        "Mart",
-        "Nisan",
-        "Mayıs",
-        "Haziran",
-        "Temmuz",
-        "Ağustos",
-        "Eylül",
-        "Ekim",
-        "Kasım",
-        "Aralık",
-      ];
 
       const monthSpanRaw = monthNameText.textContent; // Ex: "Temmuz 2025"
       const monthSpan = monthSpanRaw.replace(/\s+/g, " ").trim();
@@ -117,8 +155,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       const displayedYear = parseInt(yy, 10);
 
       console.log({ monthName, displayedMonth, displayedYear });
-      // Örnek çıktı:
-      // { monthName: "Temmuz", displayedMonth: 6, displayedYear: 2025 }
 
       const cells = getDayCells();
       cells.forEach((cell) => {
@@ -136,6 +172,13 @@ window.addEventListener("DOMContentLoaded", async () => {
           day: dayNum,
         });
 
+        if (cellDate.isAfter(today, "day")) {
+          cell.classList.add("disabled");
+          cell.setAttribute("aria-disabled", "true");
+          cell.style.opacity = "0.4";
+          cell.style.backgroundColor = "gray";
+        }
+
         if (!cellDate.isBetween(minDate, maxDate, "day", "[]")) {
           cell.classList.add("disabled");
           cell.setAttribute("aria-disabled", "true");
@@ -150,16 +193,6 @@ window.addEventListener("DOMContentLoaded", async () => {
           `view=${displayedMonth}`,
           `min===max? ${monthMin === monthMax}`
         );
-
-        // const cells = getDayCells();
-
-        // cells.forEach((cell) => {
-        //   const dayNum = parseInt(cell.textContent.trim(), 10);
-        //   const cellDate = moment()
-        //     .year(sel.year()) // aynı yıl
-        //     .month(displayedMonth) // o anda görüntülenen ay
-        //     .date(dayNum);
-        // console.log(cellDate);
 
         // —————— Tek aya sığan aralık: ——————
         if (monthMin === monthMax) {
@@ -221,15 +254,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     subtree: true, // tüm alt ağaçta dinle
   });
 
-  const textNode = monthName.firstChild;
-  observer.observe(textNode, { characterData: true });
   observer.observe(monthName.firstChild, { characterData: true });
-
-  function getDayCells() {
-    return card.querySelectorAll('[id^="day-cell"]');
-  }
-  //?bu şekilde çağırmak mantıklı yeni gelen değeri alıyorum belli bir değişkende sabit kalmıyor günler
-  // console.log("getDayCells() sayısı:", getDayCells().length);
 
   let isFirstClick = true;
   let fromDateStr = ""; // "DD.MM.YYYY" formatında saklayacağız
@@ -237,6 +262,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   // ————— 7 Gün Kuralı —————
   async function applySevenDayRule(fromStr) {
     const { from, to } = await dropdown.getDateRange();
+
     const sel = moment(fromStr, "DD.MM.YYYY");
     const minDate = sel.clone().subtract(7, "days");
     const maxDate = sel.clone().add(7, "days");
@@ -294,19 +320,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // // console.log(hydrated);
-  // hydrated[3].addEventListener("click", () => {
-  //   // console.log("✅ Hydrated element clicked!");
-  // });
-
-  // dropdown.addEventListener("dateRangeChange", (evt) => {
-  //   console.log("▶ dateRangeChange event detail:", evt.detail);
-  // });
-
-  // // Ya da Array.from ile gerçek bir diziye çevirip işle:
-  // const items = Array.from(grid);
-  // items.map((cell) => cell.id); // ["day-cell-1", "day-cell-2", ...]
-
   grid.forEach((item) => {
     item.addEventListener("click", () => {
       setTimeout(async () => {
@@ -317,11 +330,37 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  dropdown.addEventListener("dateRangeChange", (evt) => {
-    const { from, to } = evt.detail;
-    // console.log({ from, to });
-    if (from && !to) {
-      applySevenDayRule(from);
-    }
-  });
+  // dropdown.addEventListener("dateRangeChange", (evt) => {
+  //   const { from, to } = evt.detail;
+  //   // console.log({ from, to });
+  //   if (from && !to) {
+  //     applySevenDayRule(from);
+  //   }
+  // });
+
+  // dropdown.addEventListener("dateRangeChange", async (evt) => {
+  //   console.log("🔔 dateRangeChange tetiklendi:", evt.detail);
+
+  //   let { from, to } = evt.detail;
+
+  //   // Eğer henüz 'to' seçilmemişse çık
+  //   if (!from || !to) {
+  //     console.log("→ from veya to yok, return");
+  //     return;
+  //   }
+
+  //   // Bugünün DD.MM.YYYY formatlı hali
+
+  //   // Eğer seçilen 'to' bugünden sonra ise, to = todayStr yap
+  //   if (moment(to, "DD.MM.YYYY").isAfter(moment(), "day")) {
+  //     to = todayStr;
+  //     // ix-date-dropdown'un API'si setDateRange veya setValue gibi
+  //     // bir metot sunuyorsa onu kullan:
+  //     await dropdown.setDateRange({ from, to });
+  //     console.log("→ güncellenmiş detail:", { from, to });
+  //   }
+
+  //   // Buraya +7 gün kuralını da isteğe bağlı ekleyebilirsin
+  //   applySevenDayRule(from);
+  // });
 });
