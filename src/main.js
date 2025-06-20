@@ -149,6 +149,8 @@ window.addEventListener("DOMContentLoaded", async () => {
       console.log(monthSpan);
       console.log("Parsing monthSpan:", JSON.stringify(monthSpan));
 
+      const todayIso = moment().format("YYYY-MM-DD");
+
       // 2) monthSpan zaten "Temmuz 2025" gibi geliyor:
       const [mn, yy] = monthSpan.split(" ");
       const displayedMonth = monthNamesTr.indexOf(mn);
@@ -172,7 +174,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           day: dayNum,
         });
 
-        if (cellDate.isAfter(today, "day")) {
+        if (cellDate.isAfter(todayIso, "day")) {
           cell.classList.add("disabled");
           cell.setAttribute("aria-disabled", "true");
           cell.style.opacity = "0.4";
