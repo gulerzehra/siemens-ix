@@ -37,13 +37,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   // console.log("hydrated elements:", hydrated);
   // console.log(hydrated[3]);
   //?sadece takvim kısmı
-  console.log(hydrated[4]);
+  // console.log(hydrated[4]);
   //->burası done buton
 
   const doneButton = hydrated[4];
-  doneButton.addEventListener("click", () => {
-    console.log("✅ Done button clicked!");
-  });
+  // doneButton.addEventListener("click", () => {
+  //   console.log("✅ Done button clicked!");
+  // });
 
   const card = hydrated[3].shadowRoot;
   // console.log("Card shadowRoot:", card);
@@ -99,7 +99,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   ];
 
   trigger.addEventListener("click", async () => {
-    console.log("🔔 No Range Set clicked");
+    // console.log("🔔 No Range Set clicked");
 
     // Kısa bir bekleme, panel tam oluşsun
     await new Promise((r) => setTimeout(r, 0));
@@ -114,7 +114,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     dropdown.setAttribute("min-date", "");
     dropdown.setAttribute("max-date", todayIso);
 
-    console.log("→ dropdown.maxDate =", dropdown.maxDate);
+    // console.log("→ dropdown.maxDate =", dropdown.maxDate);
 
     const monthSpanRaw = monthNameText.textContent.trim(); // "Temmuz 2025"
     const [mn, yy] = monthSpanRaw.split(" ");
@@ -140,7 +140,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       }
     });
 
-    console.log("→ maxDate ve manuel disable uygulandı:", todayIso);
+    // console.log("→ maxDate ve manuel disable uygulandı:", todayIso);
   });
 
   function handlerDateSelection(dateFrom, dateTo) {
@@ -217,8 +217,8 @@ window.addEventListener("DOMContentLoaded", async () => {
 
       const monthSpanRaw = monthNameText.textContent; // Ex: "Temmuz 2025"
       const monthSpan = monthSpanRaw.replace(/\s+/g, " ").trim();
-      console.log(monthSpan);
-      console.log("Parsing monthSpan:", JSON.stringify(monthSpan));
+      // console.log(monthSpan);
+      // console.log("Parsing monthSpan:", JSON.stringify(monthSpan));
 
       const todayIso = moment().format("YYYY-MM-DD");
 
@@ -227,7 +227,7 @@ window.addEventListener("DOMContentLoaded", async () => {
       const displayedMonth = monthNamesTr.indexOf(mn);
       const displayedYear = parseInt(yy, 10);
 
-      console.log({ monthName, displayedMonth, displayedYear });
+      // console.log({ monthName, displayedMonth, displayedYear });
 
       const cells = getDayCells();
       cells.forEach((cell) => {
@@ -259,13 +259,13 @@ window.addEventListener("DOMContentLoaded", async () => {
           cell.style.backgroundColor = "gray";
         }
 
-        console.log(
-          `from=${from}`,
-          `min=${minDate.format("MM")}`,
-          `max=${maxDate.format("MM")}`,
-          `view=${displayedMonth}`,
-          `min===max? ${monthMin === monthMax}`
-        );
+        // console.log(
+        //   `from=${from}`,
+        //   `min=${minDate.format("MM")}`,
+        //   `max=${maxDate.format("MM")}`,
+        //   `view=${displayedMonth}`,
+        //   `min===max? ${monthMin === monthMax}`
+        // );
 
         // —————— Tek aya sığan aralık: ——————
         if (monthMin === monthMax) {
@@ -356,7 +356,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         cell.style.backgroundColor = "";
         cell.style.opacity = "";
       }
-      console.log(minDate.format("DD.MM.YYYY"), maxDate.format("DD.MM.YYYY"));
+      // console.log(minDate.format("DD.MM.YYYY"), maxDate.format("DD.MM.YYYY"));
     });
   }
 
@@ -375,7 +375,7 @@ window.addEventListener("DOMContentLoaded", async () => {
         //! dayCells.forEach((cell) => {
         //   console.log(cell.id, cell.textContent);
         // }); //burada bütün günleri çektim
-        console.log("❓ dayCells sayısı:", dayCells.length);
+        // console.log("❓ dayCells sayısı:", dayCells.length);
         //bu kodu burada çağırdığım zaman ilk tıklamayı hangi ayda yaparsam onun gün sayısını veriyor
         // ► İlk tıklama → from atandı
         fromDateStr = from;
@@ -400,7 +400,7 @@ window.addEventListener("DOMContentLoaded", async () => {
           if (from && to) {
             handlerDateSelection(from, to);
           }
-          console.log("▶ from, to =", from, to);
+          // console.log("▶ from, to =", from, to);
         });
       }, 0);
     });
@@ -447,15 +447,15 @@ window.addEventListener("DOMContentLoaded", async () => {
     const dayCells = card.querySelectorAll('[id^="day-cell"]');
 
     // 🔍 Debug: kaç hücre var, id’leri ve metinleri ne?
-    console.log("❓ dayCells sayısı:", dayCells.length);
-    dayCells.forEach((cell) => {
-      console.log(
-        "Hücre:",
-        cell.id,
-        `"${cell.textContent.trim()}"`,
-        cell.classList.contains("disabled") ? "(disabled)" : ""
-      );
-    });
+    // console.log("❓ dayCells sayısı:", dayCells.length);
+    // dayCells.forEach((cell) => {
+    //   console.log(
+    //     "Hücre:",
+    //     cell.id,
+    //     `"${cell.textContent.trim()}"`,
+    //     cell.classList.contains("disabled") ? "(disabled)" : ""
+    //   );
+    // });
 
     // 3) Şimdi console’daki çıktıya bakıp, hangi property ile eşleşmek
     //    istediğine karar ver. Örneğin day-cell-12 id’si veya "12" metni.
@@ -473,7 +473,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     );
 
     if (sameCell) {
-      console.log("✅ Eşleşen hücre bulundu:", sameCell.id);
+      // console.log("✅ Eşleşen hücre bulundu:", sameCell.id);
       sameCell.click();
     } else {
       console.error("❌ Hücre bulunamadı:", dayNum);
