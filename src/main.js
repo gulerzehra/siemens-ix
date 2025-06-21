@@ -402,124 +402,53 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  grid.forEach((item) => {
-    item.addEventListener("click", () => {
-      setTimeout(async () => {
-        dropdown.getDateRange().then(({ from, to }) => {
-          if (from && to) {
-            handlerDateSelection(from, to);
-          }
-          // console.log("▶ from, to =", from, to);
-        });
-      }, 0);
-    });
-  });
-
-  // doneButton.addEventListener("click", async () => {
-  //   const { from, to } = await dropdown.getDateRange();
-  //   if (from && !to) {
-  //     const trigger = dropdown.shadowRoot.querySelector(
-  //       '[data-testid="date-dropdown-trigger"]'
-  //     );
-  //     trigger.click();
-  //     // ufak bir bekleme, shadow DOM güncellensin:
-  //     await new Promise((r) => setTimeout(r, 50));
-  //     const card = hydrated[3].shadowRoot;
-
-  //     const grid = card.querySelectorAll(".calendar-item");
-  //     const dayCells = Array.from(grid).filter((el) =>
-  //       el.id.startsWith("day-cell")
-  //     );
-
-  //     const isoFrom = moment(from, "DD-MM-YYYY").format("YYYY-MM-DD");
-
-  //     const sameCell = dayCells.find(
-  //       (c) =>
-  //         c.getAttribute("data-value") === isoFrom || c.id.includes(isoFrom)
-  //     );
-  //     if (sameCell) sameCell.click();
-  //     else console.error("Hücre bulunamadı:", isoFrom);
-  //   }
+  // grid.forEach((item) => {
+  //   item.addEventListener("click", () => {
+  //     setTimeout(async () => {
+  //       dropdown.getDateRange().then(({ from, to }) => {
+  //         if (from && to) {
+  //           handlerDateSelection(from, to);
+  //         }
+  //         // console.log("▶ from, to =", from, to);
+  //       });
+  //     }, 0);
+  //   });
   // });
 
   doneButton.addEventListener("click", async () => {
     const { from, to } = await dropdown.getDateRange();
-    if (!(from && !to)) return;
+    if (from && to) {
+      handlerDateSelection(from, to);
+    }
+    if (from && !to) {
+      // 1) Dropdown’ı aç, hücreler render olsun
+      dropdown.shadowRoot
+        .querySelector("[data-testid='date-dropdown-trigger']")
+        .click();
+      await new Promise((r) => setTimeout(r, 50));
 
-    // 1) Dropdown’ı aç, hücreler render olsun
-    dropdown.shadowRoot
-      .querySelector("[data-testid='date-dropdown-trigger']")
-      .click();
-    await new Promise((r) => setTimeout(r, 50));
+      // 2) Tüm gün hücrelerini al
+      const dayCells = card.querySelectorAll('[id^="day-cell"]');
 
-    // 2) Tüm gün hücrelerini al
-    const dayCells = card.querySelectorAll('[id^="day-cell"]');
+      // Kullanıcıdan gelen "DD.MM.YYYY" formatından sadece gün numarasını çıkar:
+      const dayNum = String(parseInt(from.split(".")[0], 10));
 
-    // 🔍 Debug: kaç hücre var, id’leri ve metinleri ne?
-    // console.log("❓ dayCells sayısı:", dayCells.length);
-    // dayCells.forEach((cell) => {
-    //   console.log(
-    //     "Hücre:",
-    //     cell.id,
-    //     `"${cell.textContent.trim()}"`,
-    //     cell.classList.contains("disabled") ? "(disabled)" : ""
-    //   );
-    // });
+      // 4) Bul ve tıkla
+      const sameCell = Array.from(dayCells).find(
+        (cell) =>
+          // id üzerinden:
+          cell.id === `day-cell-${dayNum}` ||
+          // veya textContent üzerinden:
+          cell.textContent.trim() === dayNum
+      );
 
-    // 3) Şimdi console’daki çıktıya bakıp, hangi property ile eşleşmek
-    //    istediğine karar ver. Örneğin day-cell-12 id’si veya "12" metni.
-
-    // Kullanıcıdan gelen "DD.MM.YYYY" formatından sadece gün numarasını çıkar:
-    const dayNum = String(parseInt(from.split(".")[0], 10));
-
-    // 4) Bul ve tıkla
-    const sameCell = Array.from(dayCells).find(
-      (cell) =>
-        // id üzerinden:
-        cell.id === `day-cell-${dayNum}` ||
-        // veya textContent üzerinden:
-        cell.textContent.trim() === dayNum
-    );
-
-    if (sameCell) {
-      console.log("✅ Eşleşen hücre bulundu:", sameCell.id);
-      sameCell.click();
-    } else {
-      console.error("❌ Hücre bulunamadı:", dayNum);
+      if (sameCell) {
+        // console.log("✅ Eşleşen hücre bulundu:", sameCell.id);
+        sameCell.click();
+      } else {
+        console.error("❌ Hücre bulunamadı:", dayNum);
+      }
+      handlerDateSelection(from, from);
     }
   });
-
-  // dropdown.addEventListener("dateRangeChange", (evt) => {
-  //   const { from, to } = evt.detail;
-  //   // console.log({ from, to });
-  //   if (from && !to) {
-  //     applySevenDayRule(from);
-  //   }
-  // });
-
-  // dropdown.addEventListener("dateRangeChange", async (evt) => {
-  //   console.log("🔔 dateRangeChange tetiklendi:", evt.detail);
-
-  //   let { from, to } = evt.detail;
-
-  //   // Eğer henüz 'to' seçilmemişse çık
-  //   if (!from || !to) {
-  //     console.log("→ from veya to yok, return");
-  //     return;
-  //   }
-
-  //   // Bugünün DD.MM.YYYY formatlı hali
-
-  //   // Eğer seçilen 'to' bugünden sonra ise, to = todayStr yap
-  //   if (moment(to, "DD.MM.YYYY").isAfter(moment(), "day")) {
-  //     to = todayStr;
-  //     // ix-date-dropdown'un API'si setDateRange veya setValue gibi
-  //     // bir metot sunuyorsa onu kullan:
-  //     await dropdown.setDateRange({ from, to });
-  //     console.log("→ güncellenmiş detail:", { from, to });
-  //   }
-
-  //   // Buraya +7 gün kuralını da isteğe bağlı ekleyebilirsin
-  //   applySevenDayRule(from);
-  // });
 });
