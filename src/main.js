@@ -103,6 +103,9 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     // Kısa bir bekleme, panel tam oluşsun
     await new Promise((r) => setTimeout(r, 0));
+    if (fromDateStr) {
+      applySevenDayRule(fromDateStr);
+    }
 
     // Bugünün tarihini ISO formatta al
     const todayIso = moment().format("YYYY-MM-DD");
@@ -191,7 +194,13 @@ window.addEventListener("DOMContentLoaded", async () => {
 
   trigger.addEventListener("click", async () => {
     await new Promise((r) => setTimeout(r, 0));
-    updateFutureDisable();
+    if (fromDateStr) {
+      applySevenDayRule(fromDateStr);
+    }
+    // aksi halde ilk açılışta önceki future-disable’ı uygula
+    else {
+      updateFutureDisable();
+    }
   });
 
   const obser = new MutationObserver(updateFutureDisable);
@@ -473,7 +482,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     );
 
     if (sameCell) {
-      // console.log("✅ Eşleşen hücre bulundu:", sameCell.id);
+      console.log("✅ Eşleşen hücre bulundu:", sameCell.id);
       sameCell.click();
     } else {
       console.error("❌ Hücre bulunamadı:", dayNum);
